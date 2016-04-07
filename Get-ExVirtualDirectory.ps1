@@ -39,7 +39,10 @@ function Get-ExVirtualDirectory {
                    ParameterSetName='Parameter Set 1')]
         [ValidateNotNull()]
         [ValidateNotNullOrEmpty()]
-        $Param1
+        $Param1,
+
+        [string]
+        $filter = "*"
     )
 
     Begin {
@@ -52,16 +55,73 @@ function Get-ExVirtualDirectory {
     }
     
     Process {
+        $result = @()
+        $i=0
         foreach ($server in $servers) {
-           	$autodresult = Get-ClientAccessServer -Identity $server.name | Select Name,AutodiscoverServiceInternalUri 
-            $autodvirdirresult = Get-AutodiscoverVirtualDirectory -Server $server.name -AdPropertiesOnly | Select InternalUrl,ExternalUrl,InternalAuthenticationMethods,ExternalAuthenticationMethods
-		    $owaresult = Get-OWAVirtualDirectory -server $server.name -AdPropertiesOnly | Select Name,Server,InternalUrl,ExternalUrl,*auth*
-            $ecpresult = Get-ECPVirtualDirectory -server $server.name -AdPropertiesOnly | Select Name,Server,InternalUrl,ExternalUrl
-            $oaresult = Get-OutlookAnywhere -server $server.name -AdPropertiesOnly | Select Name,Server,InternalHostname,ExternalHostname,ExternalClientAuthenticationMethod,InternalClientAuthenticationMethod,IISAuthenticationMethods
-            $oabresult = Get-OABVirtualDirectory -server $server.name -AdPropertiesOnly | Select Server,InternalUrl,ExternalUrl,ExternalAuthenticationMethods,InternalAuthenticationMethods,OfflineAddressBooks
-            $easresult = Get-ActiveSyncVirtualDirectory -server $server.name -AdPropertiesOnly | Select Server,InternalUrl,ExternalUrl,ExternalAuthenticationMethods,InternalAuthenticationMethods
-            $ewsresult = Get-WebServicesVirtualDirectory -server $server.name -AdPropertiesOnly | Select Server,InternalUrl,InternalNlbBypassUrl,ExternalUrl,ExternalAuthenticationMethods,InternalAuthenticationMethods
+            $i++
+            Write-Progress -Activity "Getting Autodiscover URL information" -Status "Progress:"-PercentComplete (($i / $servers.count)*100)
+            $casServ = Get-ClientAccessServer -Identity $server.name | Select Name,AutodiscoverServiceInternalUri
+            $result += $casServ
+            Clear-Variable -Name casServ
         }
+        $i=0
+        foreach ($server in $servers) {
+            $i++
+            Write-Progress -Activity "Getting Autodiscover VD information" -Status "Progress:"-PercentComplete (($i / $servers.count)*100)
+            $autoDisco = Get-AutodiscoverVirtualDirectory -Server $server.name -AdPropertiesOnly | Select Name,Server,InternalAuthenticationMethods,ExternalAuthenticationMethods
+            $result += $autoDisco
+            Clear-Variable -Name autoDisco
+        }
+        $i=0
+        foreach ($server in $servers) {
+            $i++
+            Write-Progress -Activity "Getting OWA VD information" -Status "Progress:"-PercentComplete (($i / $servers.count)*100)
+            $owa = Get-OWAVirtualDirectory -server $server.name -AdPropertiesOnly | Select Name,Server,InternalUrl,ExternalUrl,InternalAuthenticationMethods,ExternalAuthenticationMethods
+            $result += $owa
+            Clear-Variable -Name owa
+        }
+        $i=0
+        foreach ($server in $servers) {
+            $i++
+            Write-Progress -Activity "Getting ECP VD information" -Status "Progress:"-PercentComplete (($i / $servers.count)*100)
+            $ecp = Get-ECPVirtualDirectory -server $server.name -AdPropertiesOnly | Select Name,Server,InternalUrl,ExternalUrl,InternalAuthenticationMethods,ExternalAuthenticationMethods
+            $result += $ecp
+            Clear-Variable -Name ecp
+        }
+        $i=0
+        foreach ($server in $servers) {
+            $i++
+            Write-Progress -Activity "Getting Outlook Anywhere information" -Status "Progress:"-PercentComplete (($i / $servers.count)*100)
+            $oa = Get-OutlookAnywhere -server $server.name -AdPropertiesOnly | Select Name,Server,InternalHostname,ExternalHostname,ExternalClientAuthenticationMethod,InternalClientAuthenticationMethod,IISAuthenticationMethods
+            $result += $oa
+            Clear-Variable -Name oa
+        }
+        $i=0        
+        foreach ($server in $servers) {
+            $i++
+            Write-Progress -Activity "Getting OAB VD information" -Status "Progress:"-PercentComplete (($i / $servers.count)*100)
+            $oab = Get-OABVirtualDirectory -server $server.name -AdPropertiesOnly | Select Server,InternalUrl,ExternalUrl,ExternalAuthenticationMethods,InternalAuthenticationMethods,OfflineAddressBooks
+            $result += $oab
+            Clear-Variable -Name oab
+        }    
+        $i=0    
+        foreach ($server in $servers) {
+            $i++
+            Write-Progress -Activity "Getting ActiveSync VD information" -Status "Progress:"-PercentComplete (($i / $servers.count)*100)
+            $eas = Get-ActiveSyncVirtualDirectory -server $server.name -AdPropertiesOnly | Select Server,InternalUrl,ExternalUrl,ExternalAuthenticationMethods,InternalAuthenticationMethods
+            $result += $eas
+            Clear-Variable -Name eas
+        }   
+        $i=0     
+        foreach ($server in $servers) {
+            $i++
+            Write-Progress -Activity "Getting Web Services information" -Status "Progress:"-PercentComplete (($i / $servers.count)*100)
+            $ws = Get-WebServicesVirtualDirectory -server $server.name -AdPropertiesOnly | Select Server,InternalUrl,InternalNlbBypassUrl,ExternalUrl,ExternalAuthenticationMethods,InternalAuthenticationMethods
+            $result += $ws
+            Clear-Variable -Name ws
+        }
+        
+        $result            
 
     }
 

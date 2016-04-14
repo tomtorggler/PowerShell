@@ -23,11 +23,11 @@
 .OUTPUTS
     None. This script does not write any objects to the pipeline. 
 .EXAMPLE
-    .\Restore-VMPermission.ps1 -VM dc01
+    Restore-VMPermission.ps1 -VM dc01
 
     This example adds permission for dc01 VMId to the ACL of all assigned disks for dc01.
 .EXAMPLE
-    Get-VM | \.Restore-VMPermission.ps1
+    Get-VM | Restore-VMPermission.ps1
 
     This example uses Get-VM to get all VMs on the local machine. It gets all disks for all VMs and adds the required premissions for VMId to the ACL.
 .ROLE

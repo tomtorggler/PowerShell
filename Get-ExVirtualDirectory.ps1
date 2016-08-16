@@ -1,13 +1,14 @@
 function Get-ExVirtualDirectory {
     <#
     .Synopsis
-       Short description
+       Get information about Exchange virtual directories
     .DESCRIPTION
        Long description
     .EXAMPLE
-       Example of how to use this cmdlet
-    .EXAMPLE
-       Another example of how to use this cmdlet
+       Get-ExVirtualDirectory | select *
+       
+       This should be run in a PowerShell console with the Exchange cmdlets available. It will then gather
+       information about virtual directories from all Client Access Servers.
     .INPUTS
        Inputs to this cmdlet (if any)
     .OUTPUTS
@@ -40,7 +41,8 @@ function Get-ExVirtualDirectory {
         [ValidateNotNull()]
         [ValidateNotNullOrEmpty()]
         $Param1,
-
+	
+	# Specify a name filter for the servers to include.
         [string]
         $filter = "*"
     )
@@ -49,7 +51,7 @@ function Get-ExVirtualDirectory {
         try {
             $servers = @(Get-ExchangeServer | ?{$_.ServerRole -like "*ClientAccess*" -and (($_.AdminDisplayVersion -like "*15*") -or ($_.AdminDisplayVersion -like "*14*") -and ($_.Name -like $Filter))} | Select-Object Name)
 	    } catch {
-            Wirte-Warning "Error getting Exchange Server"
+            Write-Warning "Error getting Exchange Server"
             break
         }
     }

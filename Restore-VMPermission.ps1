@@ -33,7 +33,7 @@
 .ROLE
     Get-VM requires administrative rights. 
 .LINK
-    http://www.ntsystems.it/page/PS-Restore-VMPermissionps1.aspx
+    https://ntsystems.it/PowerShell/Restore-VMPermission
 #>
 
 [CmdletBinding(ConfirmImpact='Medium',SupportsShouldProcess=$true)]

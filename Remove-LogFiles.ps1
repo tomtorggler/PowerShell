@@ -48,8 +48,8 @@ Param
     $Recurse
 )
 # Clean and initialize Log File
-Remove-Item $LogFile -ErrorAction SilentlyContinue
-"$(Get-Date) Remove-LogFile started!" | Add-Content $LogFile
+Remove-Item $LogFile -ErrorAction SilentlyContinue -WhatIf:$false
+"$(Get-Date) Remove-LogFile started!" | Add-Content $LogFile -WhatIf:$false
 Write-Host "LogFile: $LogFile" -ForegroundColor Yellow
 
 $filesToDelete = Get-ChildItem -Path:$Path -File -Recurse:$Recurse -Filter:$Filter | Where-Object {$_.LastWriteTime -lt (Get-Date).AddDays(-$Age)}
@@ -66,7 +66,7 @@ if ($filesToDelete) {
             }
     }
 } else {
-    "$(Get-Date) Nothing to delete." | Add-Content $LogFile
+    "$(Get-Date) Nothing to delete." | Add-Content $LogFile -WhatIf:$false
 }
 
-"$(Get-Date) Remove-LogFile ended!" | Add-Content $LogFile
+"$(Get-Date) Remove-LogFile ended!" | Add-Content $LogFile -WhatIf:$false

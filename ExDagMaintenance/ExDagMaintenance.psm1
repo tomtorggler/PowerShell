@@ -1,4 +1,11 @@
-﻿function Start-ExDagMaintenance {
+﻿###
+# This is based on the following scripts by Justin Beeden
+# I made some adjustments for myself and merged the functions into a Module.
+# This is a work in progress and not yet fit for production use.
+# https://gallery.technet.microsoft.com/office/Exchange-2013-DAG-3ac89826
+###
+
+function Start-ExDagMaintenance {
     <#
     .NOTES
     Written by Justin Beeden

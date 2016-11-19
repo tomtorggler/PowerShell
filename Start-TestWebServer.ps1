@@ -1,77 +1,69 @@
 ﻿<#PSScriptInfo
-.VERSION 0.9.2
+.VERSION 1.0.0
 .GUID f92f5ec3-48a9-45ee-aee7-372fdb0e6e35
 .AUTHOR @torggler
-.PROJECTURI http://www.ntsystems.it/
-#>
-
-<# 
-.DESCRIPTION
-    Start a web listener that listens on a specified port and simply answers to any request, returning the URL and User-Agent string.
+.PROJECTURI https://ntsystems.it/PowerShell/start-testwebserver/
 #>
 
 <#
 .SYNOPSIS
     Webserver for load balancer testing.
 .DESCRIPTION
-    Start a web listener that listens on a specified port and simply answers to any request, returning the URL and User-Agent string.
+    Start a web listener that listens on a specified port and simply answers to any request, returning JSON object containing the request.
+    Requires administrative rights to create the listener. 
 .EXAMPLE
     .\Start-TestWebServer -Port 8001
 
     Start the test WebServer on port 8001.
 .EXAMPLE
-    .\Start-TestWebServer -Port 80 -Title "My Server" -CreateFirewallRule
+    .\Start-TestWebServer -Port 80 -CreateFirewallRule
+    Invoke-RestMethod -Uri http://localhost | Select-Object UserAgent
 
-    Start the test WebServer on port 8001 and create a Firewall Rule to allow traffic to the specified port.
-.ROLE
-    Requires administrative rights to create the listener. 
+    Start the test WebServer on port 80 and create a Firewall Rule to allow traffic to the specified port.
+    The Invoke-RestMethod cmdlet is used to send a request to the listener and parse the output.
+.INPUTS
+    None.
+.OUTPUTS
+    None.
 .LINK
-    http://www.ntsystems.it/PowerShell/start-testwebserver/
+    https://ntsystems.it/PowerShell/start-testwebserver/
 #>
 
 #Requires -RunAsAdministrator
 
-[CmdletBinding(HelpUri = 'http://www.ntsystems.it/PowerShell/start-testwebserver/')]
-Param
-(
-    # Specify a tcp port number for the HTTP listener to use
+[CmdletBinding(HelpUri = 'https://ntsystems.it/PowerShell/start-testwebserver/')]
+Param(
+    # Specify a TCP port number for the HTTP listener to use. Defaults to 8000.
     [Parameter(Position=0)]
-    [ValidateNotNull()]
-    [ValidateNotNullOrEmpty()]
     [ValidateRange(1,65535)]
     [int] 
-    $Port=8000,
+    $Port = 8000,
 
-    # Specify title for the Website
-    [Parameter(Position=1)]
-    [ValidateNotNull()]
-    [ValidateNotNullOrEmpty()]
-    [string]
-    $Title = "TestWebServer",
-
+    # Use this switch to automatically create a Windows Firewall rule to allow incoming connections on the specified port.
     [switch]
     $CreateFirewallRule
 )
 
-# supporting funtion to read the input stream 
-function Receive-Stream {
+#region Supporting Functions
 
-param( [System.IO.Stream]$reader, $encoding = [System.Text.Encoding]::GetEncoding( $null ) )
-
-    [string]$output = ""
-    [byte[]]$buffer = new-object byte[] 4096
-    [int]$total = [int]$count = 0
-   
-    do {
-        $count = $reader.Read($buffer, 0, $buffer.Length)
-        $output += $encoding.GetString($buffer, 0, $count)
-    } while ($count -gt 0)
-    $reader.Close()
-    $output 
+function Write-Response {
+    Param(
+        $ResponseObject,
+        $ContentType = 'application/json',
+        $StatusCode = 200,
+        $Message
+    ) 
+    $ResponseObject.ContentType = $ContentType
+    $ResponseObject.StatusCode = $StatusCode
+    [byte[]] $buffer = [System.Text.Encoding]::UTF8.GetBytes($Message)
+    $ResponseObject.ContentLength64 = $buffer.length
+    $output = $ResponseObject.OutputStream
+    $output.Write($buffer, 0, $buffer.length)
+    $output.Close()
 }
 
-if ($CreateFirewallRule) {
-    Write-Verbose "Creating Firewall Rule"
+function Create-FirewallRule {
+    Param($Port)
     $params = @{
         DisplayName = "Allow PS TestWS Port $Port";
         Action = "Allow";
@@ -83,7 +75,20 @@ if ($CreateFirewallRule) {
         LocalPort=$Port
     }
     $null = New-NetFirewallRule @params
+}
 
+function Remove-FirewallRule {
+    Param($Port)
+    Remove-NetFirewallRule -DisplayName "Allow PS TestWS Port $Port" -PolicyStore ActiveStore
+}
+
+#endregion
+
+#region WebServer
+
+if ($CreateFirewallRule) {
+    Write-Verbose "Creating Firewall Rule"
+    Create-FirewallRule($Port)
 }
 
 # Create listener and start server
@@ -91,7 +96,7 @@ $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add("http://+:$port/")
 $listener.Start()       
 
-Write-Host -ForegroundColor Yellow "Listening on port: $port - End with /end"
+Write-Verbose "Listening on port: $port - End with /end"
 
 while ($true) {   
     # blocks until request is received
@@ -100,57 +105,24 @@ while ($true) {
     $response = $context.Response
 
     if ($request.Url -match '/end$') { 
-        Write-Verbose "Received END request: $($request.Url) from UA $($request.UserAgent)"    
-            
-        $response.ContentType = 'text/html'
-
-        $UserHostName = $request.UserHostName.Split(':') | Select-Object -First 1
-
-        $params = @{
-            Title = "test";
-            Body = "Request: $($request.Url) <br> UA: $($request.UserAgent)"
-            PostContent = "<a href=`"http://$UserHostName/abcdef`">Abcdef</a> <br> <a href=`"http://$UserHostName/end`">End?</a>"
-        }
-        $message = ConvertTo-Html @params
-
-        [byte[]] $buffer = [System.Text.Encoding]::UTF8.GetBytes($message)
-        $response.ContentLength64 = $buffer.length
-        $output = $response.OutputStream
-        $output.Write($buffer, 0, $buffer.length)
-        $output.Close()            
-        
+        Write-Verbose "Received END request: $($request.Url) from UA $($request.UserAgent)"     
+        Write-Response -ResponseObject $response -ContentType 'text/plain' -Message 'Bye'
         Remove-Variable request, response
-        
-        $listener.Stop()
-    
         break
     }
     
     else {
-        Write-Verbose "Received URL: $($request.Url) from UA: $($request.UserAgent)" 
-            
-        $response.ContentType = 'text/html'
-
-        $UserHostName = $request.UserHostName.Split(':') | Select-Object -First 1
-
-        $params = @{
-            Title = "test";
-            Body = "Request: $($request.Url) <br> UA: $($request.UserAgent)"
-            PostContent = "<a href=`"http://$UserHostName/abcdef`">Abcdef</a> <br> <a href=`"http://$UserHostName/end`">End?</a>"
-        }
-        $message = ConvertTo-Html @params
-        
-        [byte[]] $buffer = [System.Text.Encoding]::UTF8.GetBytes($message)
-        $response.ContentLength64 = $buffer.length
-        $output = $response.OutputStream
-        $output.Write($buffer, 0, $buffer.length)
-        $output.Close()            
+        Write-Verbose "Received URL: $($request.Url) from UA: $($request.UserAgent)"
+        # The default behaviour is to simply return the request as JSON object     
+        Write-Response -ResponseObject $response -Message ($request | ConvertTo-Json)          
     }
-     
 }
+
 $listener.Stop()
 
 if($CreateFirewallRule) {
     Write-Verbose "Remove Firewall Rule"
-    Remove-NetFirewallRule -DisplayName "Allow PS TestWS Port $Port" -PolicyStore ActiveStore
+    Remove-FirewallRule($Port)
 }
+
+#endregion

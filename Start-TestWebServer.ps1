@@ -7,16 +7,16 @@
 
 <#
 .SYNOPSIS
-    Webserver for load balancer testing.
+    A basic web server that returns any request as JSON object.
 .DESCRIPTION
     Start a web listener that listens on a specified port and simply answers to any request, returning JSON object containing the request.
     Requires administrative rights to create the listener. 
 .EXAMPLE
-    .\Start-TestWebServer -Port 8001
+    .\Start-TestWebServer.ps1 -Port 8001
 
     Start the test WebServer on port 8001.
 .EXAMPLE
-    .\Start-TestWebServer -Port 80 -CreateFirewallRule
+    .\Start-TestWebServer.ps1 -Port 80 -CreateFirewallRule
     Invoke-RestMethod -Uri http://localhost | Select-Object UserAgent
 
     Start the test WebServer on port 80 and create a Firewall Rule to allow traffic to the specified port.

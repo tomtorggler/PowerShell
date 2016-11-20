@@ -1,5 +1,5 @@
 ﻿<#PSScriptInfo
-.VERSION 1.0.0
+.VERSION 1.0.1
 .GUID f92f5ec3-48a9-45ee-aee7-372fdb0e6e35
 .AUTHOR @torggler
 .PROJECTURI https://ntsystems.it/PowerShell/start-testwebserver/
@@ -62,24 +62,35 @@ function Write-Response {
     $output.Close()
 }
 
-function Create-FirewallRule {
+function New-FirewallRule {
     Param($Port)
     $params = @{
         DisplayName = "Allow PS TestWS Port $Port";
-        Action = "Allow";
+        Action = 'Allow';
         Description ="Allow PowerShell Test Web Server on Port $Port";
         Enabled = 1;
-        Profile = "Any";
-        Protocol = "TCP";
-        PolicyStore = "ActiveStore";
-        LocalPort=$Port
+        Profile = 'Any';
+        Protocol = 'TCP';
+        PolicyStore = 'ActiveStore';
+        LocalPort=$Port;
+        ErrorAction = 'Stop';
     }
-    $null = New-NetFirewallRule @params
+    try {
+         $null = New-NetFirewallRule @params
+    }
+    catch {
+        Write-Warning "Could not create firewall rule: $_"
+    }
 }
 
 function Remove-FirewallRule {
     Param($Port)
-    Remove-NetFirewallRule -DisplayName "Allow PS TestWS Port $Port" -PolicyStore ActiveStore
+    try {
+        Remove-NetFirewallRule -DisplayName "Allow PS TestWS Port $Port" -PolicyStore ActiveStore -ErrorAction Stop    
+    }
+    catch {
+        Write-Warning "Could not remove firewall rule: $_"
+    }
 }
 
 #endregion
@@ -88,41 +99,47 @@ function Remove-FirewallRule {
 
 if ($CreateFirewallRule) {
     Write-Verbose "Creating Firewall Rule"
-    Create-FirewallRule($Port)
+    New-FirewallRule($Port)
 }
 
-# Create listener and start server
+# Define listener
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add("http://+:$port/")
-$listener.Start()       
 
-Write-Verbose "Listening on port: $port - End with /end"
+# Start listener 
+try {
+    $listener.Start() 
+    Write-Verbose "Listening on port: $port - End with /end"
+    while ($true) {   
+        # blocks until request is received
+        $context = $listener.GetContext() 
+        $request = $context.Request
+        $response = $context.Response
 
-while ($true) {   
-    # blocks until request is received
-    $context = $listener.GetContext() 
-    $request = $context.Request
-    $response = $context.Response
-
-    if ($request.Url -match '/end$') { 
-        Write-Verbose "Received END request: $($request.Url) from UA $($request.UserAgent)"     
-        Write-Response -ResponseObject $response -ContentType 'text/plain' -Message 'Bye'
-        Remove-Variable request, response
-        break
-    }
-    
-    else {
-        Write-Verbose "Received URL: $($request.Url) from UA: $($request.UserAgent)"
-        # The default behaviour is to simply return the request as JSON object     
-        Write-Response -ResponseObject $response -Message ($request | ConvertTo-Json)          
+        if ($request.Url -match '/end$') { 
+            Write-Verbose "Received END request: $($request.Url) from UA $($request.UserAgent)"     
+            Write-Response -ResponseObject $response -ContentType 'text/plain' -Message 'Bye'
+            Remove-Variable request, response
+            break
+        }
+        
+        # The default behaviour is to simply return the request as JSON object  
+        else {
+            Write-Verbose "Received URL: $($request.Url) from UA: $($request.UserAgent)"
+            Write-Response -ResponseObject $response -Message ($request | ConvertTo-Json)          
+        }
     }
 }
+catch { 
+    Write-Warning -Message $_
+}
+finally { 
+    $listener.Stop()
 
-$listener.Stop()
-
-if($CreateFirewallRule) {
-    Write-Verbose "Remove Firewall Rule"
-    Remove-FirewallRule($Port)
+    if($CreateFirewallRule) {
+        Write-Verbose "Remove Firewall Rule"
+        Remove-FirewallRule($Port)
+    }
 }
 
 #endregion

@@ -12,6 +12,8 @@ New-Alias -Name ipcli -Value Import-PowerCliModules
 
 # check if newer release is available on GitHub
 function Test-PSVersionGitHub {
+    [cmdletbinding()]
+    param()
     try {
         $Release = Invoke-RestMethod https://github.com/PowerShell/PowerShell/releases.atom -ErrorAction Stop | Select-Object -First 1
     } catch {
@@ -22,10 +24,14 @@ function Test-PSVersionGitHub {
     $Download = -join("https://github.com",$Release.link.href)
     
     if($GitId -eq  $PSVersionTable.GitCommitId) {
-        Write-Host "$GitId is the latest version. `n" -ForegroundColor Green
+        Write-Verbose "$GitId is the latest version."
     } else {
-        Write-Host "You are running $($PSVersionTable.GitCommitId) but $GitId is available!" -ForegroundColor Yellow
-        Write-Host "Download from: $Download `n" -ForegroundColor Yellow
+        Write-Verbose "You are running $($PSVersionTable.GitCommitId) but $GitId is available!"
     }
+    New-Object -TypeName psobject -Property ([ordered]@{
+        InstalledVersion=$($PSVersionTable.GitCommitId);
+        GitHubVersion=$GitId;
+        RealeaseLink=$Download
+    })
 }
 Test-PSVersionGitHub

@@ -1,3 +1,4 @@
+# just testing...
 # connect to exchange online
 # Connect-Exchange -Online -Credential (Get-Credential)
 #

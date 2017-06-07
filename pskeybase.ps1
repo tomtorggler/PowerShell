@@ -1,16 +1,16 @@
 
-function Invoke-Keybase {
+function Read-KeybasePgpMessage {
     <#
     .SYNOPSIS
         A wrapper for the keybase tool.
     .DESCRIPTION
         This function provides a wrapper for "keybase pgp decrypt" to make it easier to use.
     .EXAMPLE
-        PS > Invoke-Keybase -File ./Downloads/mail.txt
+        PS > Read-KeybasePgpMessage -File ./Downloads/mail.txt
         
         This example tries to decrypt the mail.txt file using "keybase pgp decrypt -i mail.txt" 
     .EXAMPLE
-        PS > Get-ChildItem .\Downloads | Invoke-Keybase
+        PS > Read-KeybasePgpMessage .\Downloads | Invoke-Keybase
 
         This example first gets all items in the ./Downloads folder and then tries to decrypt each one using "keybase pgp decrypt -i <filename>"
     .INPUTS

@@ -15,15 +15,16 @@ function Get-AntMinerStats {
             "Host" = $miner
             "Uptime" = [math]::round((New-TimeSpan -Seconds $($StringData.Where{$_.Keys -eq "Elapsed"}.Values)).TotalHours,2)
             "HashRate" = $StringData.Where{$_.Keys -eq "GHS av"}.Values
-            "Frequency" = $StringData.Where{$_.Keys -eq "Frequency"}.Values          
+            "Frequency" = $StringData.Where{$_.Keys -eq "Frequency"}.Values
+            "Max Temp" = $StringData.Where{$_.Keys -eq "temp_max"}.Values        
         }
     
         switch ($Type) {
             "S9" { 
                 foreach ($i in 6..8) {
                     $out.Add("Temp$($i-5)",$StringData.Where{$_.Keys -eq "temp2_$i"}.Values)
-                    $out.add("ASIC $i Status",$StringData.Where{$_.Keys -eq "chain_acs$i"}.Values)    
-                    $out.add("ASIC $i Errors",$StringData.Where{$_.Keys -eq "chain_hw$i"}.Values)  
+                    $out.add("ASIC $($i-5) Status",$StringData.Where{$_.Keys -eq "chain_acs$i"}.Values)    
+                    $out.add("ASIC $($i-5) Errors",$StringData.Where{$_.Keys -eq "chain_hw$i"}.Values)  
                 }
                 $out.Add("Fan 1",$StringData.Where{$_.Keys -eq "fan3"}.Values)
                 $out.Add("Fan 2",$StringData.Where{$_.Keys -eq "fan6"}.Values)
@@ -38,6 +39,16 @@ function Get-AntMinerStats {
                 $out.add("Fan 2",$StringData.Where{$_.Keys -eq "fan2"}.Values)
             }
         }
+
+        # check if there is asic status to check 
+        if ($($out.Where{$_.Keys -like "*Status"}.Values) -match "x") {
+            $out.add("ASIC Info","x")
+        } elseif($($out.Where{$_.Keys -like "*Status"}.Values) -match "-") {
+            $out.add("ASIC Info","-")
+        } else {
+            $out.add("ASIC Info","OK")
+        }
+
         Write-Output (New-Object -TypeName psobject -Property $out) 
     }
 }
@@ -80,7 +91,9 @@ function Get-SupportXmrResults {
         $Address
     )
     $uri = "https://supportxmr.com/api/miner/$Address/stats"
-    Invoke-RestMethod -Uri $uri 
+    $out = Invoke-RestMethod -Uri $uri
+    $out.amtDue = $out.amtDue / 1000000000000 
+    $out
 }
 
 function Get-BitcoinComResults {

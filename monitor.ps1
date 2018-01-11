@@ -33,15 +33,15 @@ $s9stats = Get-AntMinerStats -ComputerName s91,s92 -Type S9
 $l3stats = Get-AntMinerStats -ComputerName l31,l32 -Type l3
 
 # Create output html tables 
-$out = $l3stats | Select-Object Host,Uptime,HashRate,'Max Temp',Fan*,'ASIC Info'
-$out += $s9stats | Select-Object Host,Uptime,HashRate,'Max Temp',Fan*,'ASIC Info'
+$out = $l3stats | Select-Object Host,Uptime,HashRate,'T. max',Fan*,'ASIC'
+$out += $s9stats | Select-Object Host,Uptime,HashRate,'T. max',Fan*,'ASIC'
 $out += Get-M01Stats
 
 $outTemp= $l3stats | Select-Object Host,Temp*,Fan*
 $outTemp += $s9stats | Select-Object Host,Temp*,Fan*
 
-$outHw= $l3stats | Select-Object Host,Frequency,*Errors
-$outHw += $s9stats | Select-Object Host,Frequency,*Errors
+$outHw= $l3stats | Select-Object Host,Freq,*Errors
+$outHw += $s9stats | Select-Object Host,Freq,*Errors
 
 $outAsic = $l3stats | Select-Object Host,*Status
 $outAsic += $s9stats | Select-Object Host,*Status

@@ -15,8 +15,8 @@ function Get-AntMinerStats {
             "Host" = $miner
             "Uptime" = [math]::round((New-TimeSpan -Seconds $($StringData.Where{$_.Keys -eq "Elapsed"}.Values)).TotalHours,2)
             "HashRate" = $StringData.Where{$_.Keys -eq "GHS av"}.Values
-            "Frequency" = $StringData.Where{$_.Keys -eq "Frequency"}.Values
-            "Max Temp" = $StringData.Where{$_.Keys -eq "temp_max"}.Values        
+            "Freq" = $StringData.Where{$_.Keys -eq "Frequency"}.Values
+            "T. max" = $StringData.Where{$_.Keys -eq "temp_max"}.Values        
         }
     
         switch ($Type) {
@@ -42,11 +42,11 @@ function Get-AntMinerStats {
 
         # check if there is asic status to check 
         if ($($out.Where{$_.Keys -like "*Status"}.Values) -match "x") {
-            $out.add("ASIC Info","x")
+            $out.add("ASIC","x")
         } elseif($($out.Where{$_.Keys -like "*Status"}.Values) -match "-") {
-            $out.add("ASIC Info","-")
+            $out.add("ASIC","-")
         } else {
-            $out.add("ASIC Info","OK")
+            $out.add("ASIC","OK")
         }
 
         Write-Output (New-Object -TypeName psobject -Property $out) 

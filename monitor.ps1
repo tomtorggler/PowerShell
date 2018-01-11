@@ -56,7 +56,7 @@ $asicTable = $outAsic | ConvertTo-Html -Fragment -As List
 $index = ConvertTo-Html -Head "<meta http-equiv='refresh' content='900'>" -CssUri "style.css" -Body "<h1>Mining Statistics</h1> $unpaidTable $mainTable <a href='hw.html'>Hardware</a>" -Title "Mining Statistics" -PostContent "<footer>Updated: $(get-date) by <a href='https://twitter.com/torggler' target='_blank'>@torggler</a></footer>" 
 $index | Set-Content tomtorggler.github.io/index.html
 
-$hardware = ConvertTo-Html -CssUri "style.css" -Body "<h1>Temperature Detail</h1> $tempTable <h1>ASIC Errors</h1> $hardwareTable <h1>ASIC Status</h1> $asicTable" -Title "Mining Statistics" -PostContent "<footer>Updated: $(get-date) <a href='index.html'>back</a></footer>" 
+$hardware = ConvertTo-Html -CssUri "style.css" -Body "<a href='index.html'><h1>Mining Statistics</h1></a> <h2>Temperature Detail</h2> $tempTable <h2>ASIC Errors</h2> $hardwareTable <h2>ASIC Status</h2> $asicTable" -Title "Mining Statistics" -PostContent "<footer>Updated: $(get-date) <a href='index.html'>back</a></footer>" 
 $hardware | Set-Content tomtorggler.github.io/hw.html
 
 # commit and push to github
@@ -64,3 +64,8 @@ cd tomtorggler.github.io
 git add .
 git commit -m "updates index"
 git push
+
+
+
+
+

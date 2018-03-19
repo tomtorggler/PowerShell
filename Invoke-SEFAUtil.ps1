@@ -11,7 +11,7 @@
 
 .PROJECTURI https://ntsystems.it/post/invoke-sefautil-a-powershell-wrapper-function
 
-.EXTERNALMODULEDEPENDENCIES 
+.EXTERNALMODULEDEPENDENCIES Lync
 
 #>
 
@@ -63,7 +63,7 @@
 #>
 
 #Requires -Version 3 
-#Requires -Modules Lync
+#Requires -Module Lync
 #Requires -RunAsAdministrator
 
 [CmdletBinding(DefaultParameterSetName='TeamCall',

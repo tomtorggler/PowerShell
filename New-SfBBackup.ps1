@@ -25,7 +25,7 @@
         1.0: Basics
     To-do: Multiple pools, File Store, Autodiscovery        
 .LINK
-    http://www.ntsystems.it/page/PS-Start-LyncBackupps1.aspx
+    https://ntsystems.it/PowerShell/Start-LyncBackup/
 .LINK
     http://technet.microsoft.com/en-us/library/hh202170.aspx
 #>
@@ -79,7 +79,7 @@ Param
 
 #region Create target directory to store the exported config files
 
-    $TimeStamp = Get-Date -Format yyyy-mm-dd-hh-mm-ss
+    $TimeStamp = Get-Date -Format yyyy-MM-dd-hh-mm-ss
 
     try {
         $BackupDir = New-Item -Path $Path -ItemType Container -Name "SfBBackup-$TimeStamp" -ErrorAction Stop

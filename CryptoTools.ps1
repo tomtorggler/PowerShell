@@ -38,61 +38,40 @@ function Convert-BchAddress {
     Write-Output $out
 }
 
-enum BNBSymbol {
-    # update with
-    # (irm https://api.binance.com/api/v1/exchangeInfo | select -ExpandProperty symbols | select -ExpandProperty symbol) -join "; "
-    ETHBTC; LTCBTC; BNBBTC; NEOBTC; QTUMETH; EOSETH; SNTETH; BNTETH; BCCBTC; GASBTC; BNBETH; BTCUSDT; ETHUSDT; HSRBTC; OAXETH; DNTETH; MCOETH; ICNETH; MCOBTC; WTCBTC; WTCETH; LRCBTC; LRCETH; QTUMBTC; YOYOBTC; OMGBTC; OMGETH; ZRXBTC; ZRXETH; STRATBTC; STRATETH; SNGLSBTC; SNGLSETH; BQXBTC; BQXETH; KNCBTC; KNCETH; FUNBTC; FUNETH; SNMBTC; SNMETH; NEOETH; IOTABTC; IOTAETH; LINKBTC; LINKETH; XVGBTC; XVGETH; SALTBTC; SALTETH; MDABTC; MDAETH; MTLBTC; MTLETH; SUBBTC; SUBETH; EOSBTC; SNTBTC; ETCETH; ETCBTC; MTHBTC; MTHETH; ENGBTC; ENGETH; DNTBTC; ZECBTC; ZECETH; BNTBTC; ASTBTC; ASTETH; DASHBTC; DASHETH; OAXBTC; ICNBTC; BTGBTC; BTGETH; EVXBTC; EVXETH; REQBTC; REQETH; VIBBTC; VIBETH; HSRETH; TRXBTC; TRXETH; POWRBTC; POWRETH; ARKBTC; ARKETH; YOYOETH; XRPBTC; XRPETH; MODBTC; MODETH; ENJBTC; ENJETH; STORJBTC; STORJETH; BNBUSDT; VENBNB; YOYOBNB; POWRBNB; VENBTC; VENETH; KMDBTC; KMDETH; NULSBNB; RCNBTC; RCNETH; RCNBNB; NULSBTC; NULSETH; RDNBTC; RDNETH; RDNBNB; XMRBTC; XMRETH; DLTBNB; WTCBNB; DLTBTC; DLTETH; AMBBTC; AMBETH; AMBBNB; BCCETH; BCCUSDT; BCCBNB; BATBTC; BATETH; BATBNB; BCPTBTC; BCPTETH; BCPTBNB; ARNBTC; ARNETH; GVTBTC; GVTETH; CDTBTC; CDTETH; GXSBTC; GXSETH; NEOUSDT; NEOBNB; POEBTC; POEETH; QSPBTC; QSPETH; QSPBNB; BTSBTC; BTSETH; BTSBNB; XZCBTC; XZCETH; XZCBNB; LSKBTC; LSKETH; LSKBNB; TNTBTC; TNTETH; FUELBTC; FUELETH; MANABTC; MANAETH; BCDBTC; BCDETH; DGDBTC; DGDETH; IOTABNB; ADXBTC; ADXETH; ADXBNB; ADABTC; ADAETH; PPTBTC; PPTETH; CMTBTC; CMTETH; CMTBNB; XLMBTC; XLMETH; XLMBNB; CNDBTC; CNDETH; CNDBNB; LENDBTC; LENDETH; WABIBTC; WABIETH; WABIBNB; LTCETH; LTCUSDT; LTCBNB; TNBBTC; TNBETH; WAVESBTC; WAVESETH; WAVESBNB; GTOBTC; GTOETH; GTOBNB; ICXBTC; ICXETH; ICXBNB; OSTBTC; OSTETH; OSTBNB; ELFBTC; ELFETH; AIONBTC; AIONETH; AIONBNB; NEBLBTC; NEBLETH; NEBLBNB; BRDBTC; BRDETH; BRDBNB; MCOBNB; EDOBTC; EDOETH; WINGSBTC; WINGSETH; NAVBTC; NAVETH; NAVBNB; LUNBTC; LUNETH; TRIGBTC; TRIGETH; TRIGBNB; APPCBTC; APPCETH; APPCBNB; VIBEBTC; VIBEETH; RLCBTC; RLCETH; RLCBNB; INSBTC; INSETH; PIVXBTC; PIVXETH; PIVXBNB; IOSTBTC; IOSTETH; CHATBTC; CHATETH; STEEMBTC; STEEMETH; STEEMBNB; NANOBTC; NANOETH; NANOBNB; VIABTC; VIAETH; VIABNB; BLZBTC; BLZETH; BLZBNB; AEBTC; AEETH; AEBNB; RPXBTC; RPXETH; RPXBNB; NCASHBTC; NCASHETH; NCASHBNB; POABTC; POAETH; POABNB; ZILBTC; ZILETH; ZILBNB; ONTBTC; ONTETH; ONTBNB; STORMBTC; STORMETH; STORMBNB; QTUMBNB; QTUMUSDT; XEMBTC; XEMETH; XEMBNB; WANBTC; WANETH; WANBNB; WPRBTC; WPRETH; QLCBTC; QLCETH; SYSBTC; SYSETH; SYSBNB; QLCBNB; GRSBTC; GRSETH; ADAUSDT; ADABNB; CLOAKBTC; CLOAKETH; GNTBTC; GNTETH; GNTBNB
-}
-
-
-class BNBTicker {
-
-    BNBTicker($obj) {
-        $this.Symbol = $obj.symbol
-        $this.PercentChange = $obj.pricechangepercent
-        $this.LastPrice = $obj.lastprice
-        $this.Open = ConvertFrom-BNBTime($obj.openTime)
-    }
-
-    [void]FromBNBTime ($MilliSeconds) {
-        $this.Open = ConvertFrom-BNBTime($MilliSeconds)
-    }
-
-    [BNBSymbol]$Symbol
-    [single]$PercentChange
-    [string]$LastPrice
-    [datetime]$Open
-}
-
-function Get-BinanceTicker {
-    [cmdletbinding()]
-    param(
-        # Specify the currency pair (symbol) for which to get the price.
-        [BNBSymbol[]]
-        $Symbol
-    )
-    process {
-        foreach($s in $Symbol){
-            $result = Invoke-RestMethod -Uri https://api.binance.com/api/v1/ticker/24hr?symbol=$s -ErrorAction SilentlyContinue 
-            #| Select-Object -Property symbol,pricechangepercent,lastprice,openTime
-            if($result){
-                [BNBTicker]::new($result)
-            }
-        }   
-    }
-}
-
-function ConvertFrom-BNBTime ($MilliSeconds) {
-    [timezone]::CurrentTimeZone.ToLocalTime(([datetime]'1970-01-01').AddMilliSeconds($MilliSeconds))
-}
-
-
-enum CryptoCurrency {
+enum CryptoCurrencySymbol {
     eth
     btc
     ltc
+    bch
 }
 
+class CryptoCurrency {
+    [string]$address
+}
+
+class ETH : CryptoCurrency {
+    ETH ($obj) {
+        $this.address = $obj.address
+        $this.balance = $obj.balance / 1000000000000000000
+        $this.sent = $obj.total_sent / 1000000000000000000
+        $this.received = $obj.total_received / 1000000000000000000
+    }
+    [double]$balance
+    [double]$sent
+    [double]$received
+}
+
+class BTC : CryptoCurrency {
+    BTC ($obj) {
+        $this.address = $obj.address
+        $this.balance = $obj.balance / 100000000
+        $this.sent = $obj.total_sent / 100000000
+        $this.received = $obj.total_received / 100000000
+    }
+    [double]$balance
+    [double]$sent
+    [double]$received
+}
 function Get-BlockCypherAddress {
     [CmdletBinding()]
     param(
@@ -103,13 +82,11 @@ function Get-BlockCypherAddress {
         [string]
         $Address,
         [string]
-        $Version = "v1",
-        [CryptoCurrency]
-        $Currency = "eth"
+        $Version = "v1"
     )
-
+    $Currency = Get-CurrencyFromAddress -Address $Address
     $Address = $Address.Replace("0x","")
-
+    Write-Verbose "Currency is $Currency"
     Invoke-RestMethod https://api.blockcypher.com/$version/$currency/main/addrs/$Address
 }
 
@@ -123,12 +100,22 @@ function Get-BlockCypherBalance {
         [string]
         $Address,
         [string]
-        $Version = "v1",
-        [CryptoCurrency]
-        $Currency = "eth"
+        $Version = "v1"
     )
+    $Currency = Get-CurrencyFromAddress -Address $Address
     $Address = $Address.Replace("0x","")
-    Invoke-RestMethod https://api.blockcypher.com/$version/$currency/main/addrs/$Address/balance
+    Write-Verbose "Currency is $Currency"
+    $r = Invoke-RestMethod https://api.blockcypher.com/$version/$currency/main/addrs/$Address/balance
+    if ($r) {
+        switch($Currency) {
+            "eth" {
+                [ETH]::new($r)
+            }
+            Default {
+                [BTC]::new($r)
+            }
+        }
+    }
 }
 
 function Get-BlockCypherTransaction {
@@ -149,7 +136,8 @@ function Get-BlockCypherTransaction {
         $Address,
         [string]
         $Version = "v1",
-        [CryptoCurrency]
+        [Parameter(ParameterSetName="ByTxHash")]
+        [CryptoCurrencySymbol]
         $Currency = "eth"
     )
 
@@ -160,8 +148,63 @@ function Get-BlockCypherTransaction {
         $hash = $hash.Replace("^0x","")
         Invoke-RestMethod https://api.blockcypher.com/$version/$currency/main/txs/$Hash
     } elseif ($Address) {
-        $Address = $Address.Replace("0x","")
-        Get-BlockCypherAddress -Address $Address -Currency $PSBoundParameters.Currency | Select-Object -ExpandProperty txrefs
+        Get-BlockCypherAddress -Address $Address | Select-Object -ExpandProperty txrefs
+    }
+}
+
+function Get-CurrencyFromAddress {
+    [CmdletBinding()]
+    param($Address)
+    switch ($Address) {
+        { $_ -match "^[13][a-zA-Z0-9]{27,34}$" } { "btc" }
+        { $_ -match "^L[a-km-zA-HJ-NP-Z1-9]{26,33}$" } { "ltc" }
+        { $_ -match "^(0x)?[0-9a-f]{40}$" } { "eth" }
+    }
+}
+
+
+function Get-BchBalance {
+    [CmdletBinding()]
+    param(
+        $Address
+    )
+
+    $result = Invoke-RestMethod "https://api.blockchair.com/bitcoin-cash/dashboards/address/$address"
+    if($result){
+        $result.data
+    }
+
+}
+
+function Get-BchTransaction {
+    [CmdletBinding()]
+    param(
+        $Hash
+    )
+    $result = Invoke-RestMethod "https://api.blockchair.com/bitcoin-cash/transactions?q=hash($hash)"
+    if($result){
+        $result.data
+    }
+}
+
+
+#https://explorer.bitcoin.com/api/btc/addr/14hbuMuFCGSCzQr3TCVqPUKGkDGbepEoe2
+#https://explorer.bitcoin.com/api/bch/txs/?address=14hbuMuFCGSCzQr3TCVqPUKGkDGbepEoe2
+#https://explorer.bitcoin.com/api/bch/txs/?hash=ffe712907e11479bdca14445f66b5fbabd4a5e2c73bc7d7f1511429a470be036
+
+
+function Get-ChainfeedTx {
+    [CmdletBinding()]
+    param (
+        [string]
+        $Hash
+    )
+    process {
+        $Response = Invoke-RestMethod https://chainfeed.org/tx/$Hash
+        New-Object -TypeName psobject -Property (@{
+            Sender = $Response.Sender
+            Text = [System.Text.Encoding]::ASCII.GetString($Response.data[-1].buf.data)
+        })
     }
 }
 

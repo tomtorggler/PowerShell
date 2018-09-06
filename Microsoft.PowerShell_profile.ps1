@@ -139,7 +139,7 @@ function Send-MailJetMail {
 
 function prompt 
 { 
-    $pss = Get-PSSession
+    $pss = Get-PSSession | Where-Object Availability
     $cwd = (Get-Location).Path        
     if($pss) {
         $WindowTitle = "Connected to: " + ($pss.ComputerName -join ", ") 
@@ -217,4 +217,16 @@ function Get-PublicIP {
         $out.add("IPv6",$ip6.IPAddressToString)
     }
     New-Object -TypeName psobject -Property $out
+}
+
+function Get-JekyllTitle {
+    [CmdletBinding()]
+    param (
+        [string]
+        $String
+    )       
+    process {
+        $date = Get-Date -Format "yyyy-MM-dd"
+        $date,($string -replace "\W+","-") -join "-"   
+    }
 }

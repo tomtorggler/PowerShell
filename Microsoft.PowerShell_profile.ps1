@@ -227,6 +227,6 @@ function Get-JekyllTitle {
     )       
     process {
         $date = Get-Date -Format "yyyy-MM-dd"
-        $date,($string -replace "\W+","-") -join "-"   
+        $date,($string.ToLower() -replace "\W+","-") -join "-"   
     }
 }

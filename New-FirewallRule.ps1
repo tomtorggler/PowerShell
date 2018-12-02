@@ -1,15 +1,16 @@
 function New-FirewallRule {
     Param(
         [string]$Name,
-        [int]$Port
+        [int]$Port,
+        [string]$Protocol
     )
     $params = @{
         DisplayName = $Name;
         Action = 'Allow';
-        Description = "$Name on $Port";
+        Description = "$Name on $Protocol/$Port";
         Enabled = 1;
         Profile = 'Any';
-        Protocol = 'TCP';
+        Protocol = $Protocol;
         PolicyStore = 'PersistentStore';
         LocalPort=$Port;
         ErrorAction = 'Stop';

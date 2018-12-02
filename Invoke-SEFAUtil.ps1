@@ -68,8 +68,7 @@
 
 [CmdletBinding(DefaultParameterSetName='TeamCall',
                 SupportsShouldProcess=$true, 
-                ConfirmImpact='Medium',
-                OnlineHelp="https://ntsystems.it/PowerShell/Invoke-SEFAUtil/")]
+                ConfirmImpact='Medium')]
 [OutputType([psobject])]
 Param
 (

@@ -23,7 +23,7 @@ function Start-OutlookBackup {
         [Parameter()]
         [system.io.fileinfo]$Path = (Join-Path -Path $env:USERPROFILE -ChildPath Documents\olBackup.pst),
         [Parameter()]
-        [string]$EmailAddress = ("{0}@{1}" -f $env:USERNAME,$env:USERDNSDOMAIN)
+        [string]$EmailAddress = ("{0}@{1}" -f $env:USERNAME,$env:USERDNSDOMAIN)$EmailAddress = ("{0}@{1}" -f $env:USERNAME,$env:USERDNSDOMAIN)
     )
     $Outlook = New-Object -ComObject Outlook.Application
     Write-Verbose "Connected to Outlook Profile $($outlook.DefaultProfileName)"

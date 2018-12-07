@@ -11,27 +11,28 @@
 .PROJECTURI https://ntsystems.it/PowerShell/Remove-LogFile/
 
 #>
+
 <#
 .SYNOPSIS
-   Deletes log files.
+    Deletes log files.
 .DESCRIPTION
-   Deletes log files, parameters can be used to specify the root folder, whether or not to include subfolders, a file extension filter and the age.
-   This is intended to be run as scheduled task to regularly clean-up log files. 
+    Deletes log files, parameters can be used to specify the root folder, whether or not to include subfolders, a file extension filter and the age.
+    This is intended to be run as scheduled task to regularly clean-up log files. 
 .EXAMPLE
-   PS C:\> .\Remove-LogFile.ps1 -Path C:\inetpub\logs -Age 7 -Recurse
+    PS C:\> .\Remove-LogFile.ps1 -Path C:\inetpub\logs -Age 7 -Recurse
 
-   This example removes all *.log files older than 7 days from C:\inetpub\logs and any subfolders.
+    This example removes all *.log files older than 7 days from C:\inetpub\logs and any subfolders.
 .INPUTS
     None.
 .OUTPUTS
     None.
 .NOTES
-   Author: Thomas Torggler; @torggler
-   Date: 2014-04-30
-   Version: 1.1
-        1.0: Basic Script
-        1.1: handle if no files to delete.
-    Notes: If PowerShell Version 2.0 is used, remove the -file Parameter from Get-Childitem
+    Author: Thomas Torggler; @torggler
+    Date: 2014-04-30
+    Version: 1.1
+            1.0: Basic Script
+            1.1: handle if no files to delete.
+    If PowerShell Version 2.0 is used, remove the -file Parameter from Get-Childitem
 .LINK
     https://ntsystems.it/PowerShell/Remove-LogFile/
 #>

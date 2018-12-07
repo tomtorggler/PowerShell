@@ -1,6 +1,6 @@
 <#PSScriptInfo
 
-.VERSION 1.0.0
+.VERSION 1.0.1
 
 .GUID a7d9b0b5-0f81-4ec7-be89-7c6a0390ef50
 
@@ -8,7 +8,7 @@
 
 .TAGS Splunk
 
-.PROJECTURI https://ntsystems.it/post/sending-events-to-splunks-http-event-collector-with-powershell/
+.PROJECTURI https://ntsystems.it/post/sending-events-to-splunks-http-event-collector-with-powershell
 
 #>
 

@@ -16,7 +16,7 @@ function Get-Cdr {
         } 
         if(Test-Path $Path) {
             Write-Verbose "Get CDR from: $Path"
-            (Select-String -Pattern $Pattern -Path $Path | Select-Object -ExpandProperty line) -replace "\|","," -replace "\s*,",","
+            (Select-String -Pattern $Pattern -Path $Path | Select-Object -ExpandProperty line).TrimEnd() -replace "\|","," -replace "\s*,",","
         }   
     }
 }

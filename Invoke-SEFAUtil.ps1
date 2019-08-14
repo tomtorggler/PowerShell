@@ -325,12 +325,12 @@ Process
             $OutData = $null
             
             # looping through the array, create key:value pairs and add them to $outData
-            for ($i = 0; $i -lt $SEFAResultSplit.Count; $i++) {
-                if ([bool]!($i%2)) {
-                    $j = $i + 1 
-                    $outData += @{$SEFAResultSplit[$i] = $SEFAResultSplit[$j]}
+                for ($i = 0; $i -lt $SEFAResultSplit.Count; $i++) {
+                    if ([bool]!($i%2)) {
+                        $j = $i + 1 
+                        $outData += @{$SEFAResultSplit[$i] = $SEFAResultSplit[$j]}
+                    }
                 }
-            }
 
             # create custom object and write it to the pipeline
             Write-Output (New-Object -TypeName psobject -Property $OutData)

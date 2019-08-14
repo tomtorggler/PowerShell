@@ -7,7 +7,7 @@
 ## Aliases... because of muscle memory :/
 New-Alias -Name ll -Value Get-ChildItem -ErrorAction SilentlyContinue
 
-Import-Module C:\Users\thomas.torggler\AppData\Local\Apps\2.0\9V9HVHDB.2KG\691XWNER.8NB\micr..tion_d8f8f667ee342b5c_0010.0000_6b4a13fd451b1c00\Microsoft.Exchange.Management.ExoPowershellModule.dll -ErrorAction SilentlyContinue
+#Import-Module C:\Users\thomas.torggler\AppData\Local\Apps\2.0\9V9HVHDB.2KG\691XWNER.8NB\micr..tion_d8f8f667ee342b5c_0010.0000_6b4a13fd451b1c00\Microsoft.Exchange.Management.ExoPowershellModule.dll -ErrorAction SilentlyContinue
 
 function Invoke-AsAdmin {
     param($command)
@@ -22,6 +22,14 @@ function Set-DnsOpen {
     Invoke-AsAdmin $command
 }
 
+function Set-DnsCloudflare { 
+    param(
+        $InterfaceIndex = 4
+    )
+    $command = "Set-DnsClientServerAddress -InterfaceIndex $InterfaceIndex -ServerAddresses ('1.1.1.1','1.0.0.1','2606:4700:4700::1111','2606:4700:4700::1001')"
+    Invoke-AsAdmin $command
+}
+
 function Set-DnsDhcp {
     param(
         $InterfaceIndex = 4
@@ -30,42 +38,6 @@ function Set-DnsDhcp {
     Invoke-AsAdmin $command
 }
 
-function Get-InternetProxy {
-    param(
-        [switch]$ShowAutoConfig
-    )
-    $regKey="HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings"        
-    Get-ItemProperty -path $regKey | Select-Object -Property ProxyEnable,ProxyServer,ProxyOverride,AutoConfigURL,@{n="AutoDetect";E={Get-InternetProxyAutoDetect}}
-    if($ShowAutoConfig) {
-        $path = Get-ItemProperty -path $regKey | Select-Object -ExpandProperty AutoConfigURL
-        if($path -match "file:") {
-            Get-Content -Path $($path.replace("file://",""))
-        }
-    }               
-}
-Function Disable-InternetProxy {
-    param(
-        [switch]$ClearAutoConfigUrl
-    )
-    $regKey="HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings"        
-    Set-ItemProperty -Path $regKey -Name ProxyEnable -Value 0
-    Set-ItemProperty -Path $regKey -Name ProxyServer -Value ""
-    if ($ClearAutoConfigUrl0) {
-        Set-ItemProperty -Path $regKey -Name AutoConfigURL -Value ""
-    }               
-}
-Function Enable-InternetProxy {
-    param(
-        $proxyServer = "localhost:8118",
-        $AutoConfigFile
-    )
-    $regKey="HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings"        
-    Set-ItemProperty -Path $regKey -Name ProxyEnable -Value 1
-    Set-ItemProperty -Path $regKey -Name ProxyServer -Value $proxyServer
-    if($AutoConfigFile) {
-        Set-ItemProperty -Path $regKey -Name AutoConfigURL -Value $AutoConfigFile
-    }
-}
 # Chocolatey profile
 $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
 if (Test-Path($ChocolateyProfile)) {
@@ -73,7 +45,10 @@ if (Test-Path($ChocolateyProfile)) {
 }
 
 function Set-SecurityProtocol {
-    param($Protocol,[switch]$Default)
+    param(
+        [System.Security.Authentication.SslProtocols]$Protocol,
+        [switch]$Default
+    )
     if($default) {
         [net.servicepointmanager]::SecurityProtocol = [System.Security.Authentication.SslProtocols]::Default
     } else {
@@ -84,19 +59,15 @@ function Get-SecurityProtocol {
     [net.servicepointmanager]::SecurityProtocol
 }
 
-if($PSEdition -ne "Core"){
-    $connectedIf = Get-NetIPInterface -ConnectionState Connected | Where-Object ifIndex -ne 1
-    $dnsServers = (Get-DnsClientServerAddress -InterfaceIndex $connectedIf.IfIndex | select -ExpandProperty serveraddresses) -join ", "
+$connectedIf = Get-NetIPInterface -ConnectionState Connected | Where-Object ifAlias -NotMatch "loopback|veth|bluetooth"
+if($connectedIf){
+    $dnsServers = (Get-DnsClientServerAddress -InterfaceIndex $connectedIf.IfIndex | Select-Object -ExpandProperty serveraddresses -Unique) -join ", "
 }
+
 $write = "
 ---
-Hello $($env:USERNAME) @ $($env:COMPUTERNAME) [$($PSVersionTable.BuildVersion)]
-
-Remeber: Set-DnsOpen, Set-DnsDhcp, Get-DnsClientServerAddress, Get-InternetProxy
-HidServ: zik25npqnzrdl3r7.onion 6slsw42zq5n76gt7.onion uhhikmyycppwnh3b.onion
-
-Connection Alias $(($connectedIf.InterfaceAlias | Select-Object -Unique) -join ", ") 
-Connection Index $(($connectedIf.IfIndex | Select-Object -Unique) -join ", ")
+IfAlias: $(($connectedIf.InterfaceAlias | Select-Object -Unique) -join ", ") 
+IfIndex: $(($connectedIf.IfIndex | Select-Object -Unique) -join ", ")
 DNS Servers: $dnsServers
 Security Protcols: $(Get-SecurityProtocol)
 ---
@@ -137,66 +108,27 @@ function Send-MailJetMail {
 }
 
 
-function prompt 
-{ 
+function prompt {
     $pss = Get-PSSession | Where-Object Availability
     $cwd = (Get-Location).Path        
     if($pss) {
         $WindowTitle = "Connected to: " + ($pss.ComputerName -join ", ") 
-        $info = $pss.Name -join ", " 
+        $info = $pss.ComputerName -join ", "
+        $info += ": #$($MyInvocation.HistoryId)"
     } else {
         $WindowTitle = $cwd
-        $info = "PS"
+        $info = "PS: #$($MyInvocation.HistoryId)"
+    }
+    if($Global:WindowTitlePrefix){
+        $WindowTitle = $Global:WindowTitlePrefix,$WindowTitle -join ": "
     }
     $host.UI.RawUI.WindowTitle = $WindowTitle
     $host.UI.Write("Yellow", $host.UI.RawUI.BackGroundColor, "[$info]")
     " $($cwd.Replace($env:USERPROFILE,"~"))$('>' * ($nestedPromptLevel + 1)) ";
 }
 
-
-function Get-InternetProxyAutoDetect {
-    [CmdletBinding()]
-    param()
-
-    $RegKey = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Connections\" 
-    $DefaultConnection = $(Get-ItemProperty $RegKey).DefaultConnectionSettings 
-
-    if ($($DefaultConnection[8] -band 8) -ne 8) { 
-        Write-Verbose "Auto Detection disabled for Default Connection"
-        Write-Output $false 
-    } else { 
-        Write-Verbose "Auto Detection enabled for Default Connection"
-        Write-Output $true 
-    }
-}
-
-function Enable-InternetProxyAutoDetect {
-    [CmdletBinding()]
-    param()
-
-    $RegKey = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Connections\" 
-    $DefaultConnection = $(Get-ItemProperty $RegKey).DefaultConnectionSettings 
-
-    $DefaultConnection[8] = $DefaultConnection[8] -bor 8 
-    $DefaultConnection[4]++ 
-
-    Write-Verbose "Enabling Proxy auto detection for Default Connection"
-    Set-ItemProperty -Path $RegKey -Name DefaultConnectionSettings -Value $DefaultConnection 
-}
-
-function Disable-InternetProxyAutoDetect {
-    [CmdletBinding()]
-    param()
-
-    $RegKey = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings\Connections\" 
-    $DefaultConnection = $(Get-ItemProperty $RegKey).DefaultConnectionSettings 
-
-    $mask = -bnot 8 
-    $DefaultConnection[8] = $DefaultConnection[8] -band $mask 
-    $DefaultConnection[4]++ 
-    
-    Write-Verbose "Disabling Proxy auto detection for Default Connection"
-    Set-ItemProperty -Path $RegKey -Name DefaultConnectionSettings -Value $DefaultConnection 
+function Set-WindowTitle($String) {
+    $Global:WindowTitlePrefix = $String
 }
 
 function Get-PublicIP {
@@ -229,4 +161,30 @@ function Get-JekyllTitle {
         $date = Get-Date -Format "yyyy-MM-dd"
         $date,($string.ToLower() -replace "\W+","-") -join "-"   
     }
+}
+
+
+# check if a new release of PowerShell Core is available on GitHub
+function Test-PSVersionGitHub {
+    try {
+        # get latest release from github atom feed
+        $Release = Invoke-RestMethod https://github.com/PowerShell/PowerShell/releases.atom -ErrorAction Stop | Select-Object -First 1
+    } catch {
+        Write-Warning "Could not check for new version. $_ `n"
+        break
+    }
+    # extract information from atom response
+    $GitId = $Release.id -split "/" | Select-Object -Last 1
+    $Download = -join("https://github.com",$Release.link.href)
+    # Add information to dictionary for output
+    $output = [ordered]@{
+        "PSVersion" = $PSVersionTable.PSVersion;
+        "GitCommitId" = $PSVersionTable.GitCommitId;
+        "GitHubReleaseVersion" = $GitId;
+        "GitHubReleaseLink" = $Download;
+    }
+    Write-Output (New-Object -TypeName psobject -Property $output)
+}
+if($iscoreclr){
+    Test-PSVersionGitHub
 }

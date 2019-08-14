@@ -59,4 +59,4 @@ function Get-TelegramFile {
     }
 }
 
-# Get-TelegramFile -ApiKey "801020227:AAFKrXBcculBZr20WgqhgNVV61ZUe40qMvA" -FileId AgADAgADUasxGxIpWEh0sk6-k2noT0j-tw8ABJ5RD7ZyHEnAoxIAAgI -Path ~\Desktop -Verbose
+# Get-TelegramFile -ApiKey "key" -FileId AgADAgADUasxGxIpWEh0sk6-k2noT0j-tw8ABJ5RD7ZyHEnAoxIAAgI -Path ~\Desktop -Verbose

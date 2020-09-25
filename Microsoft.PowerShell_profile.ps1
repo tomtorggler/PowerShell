@@ -3,7 +3,7 @@
 ### . $env:USERPROFILE\Git\PowerShell\Microsoft.PowerShell_profile.ps1
 ### to dot-source this file
 ######
-
+$host.PrivateData.ErrorForegroundColor = 'white'
 ## Aliases... because of muscle memory :/
 New-Alias -Name ll -Value Get-ChildItem -ErrorAction SilentlyContinue
 
@@ -131,25 +131,6 @@ function Set-WindowTitle($String) {
     $Global:WindowTitlePrefix = $String
 }
 
-function Get-PublicIP {
-    [CmdletBinding()]
-    param(
-        [Parameter()]
-        [ValidateRange(1,8)]
-        [int]
-        $Timeout = 1
-    )
-    # why does irm output an error message even if silentlycontinue?
-    [ipaddress]$ip4 = Invoke-RestMethod http://ipv4.myip.dk/api/Info/IPv4Address -TimeoutSec $Timeout -ErrorAction SilentlyContinue
-    [ipaddress]$ip6 = Invoke-RestMethod http://ipv6.myip.dk/api/Info/IPv6Address -TimeoutSec $Timeout -ErrorAction SilentlyContinue
-    $out = @{
-        IPv4 = $ip4.IPAddressToString
-    }
-    if ($ip6.AddressFamily -eq "InterNetworkV6"){
-        $out.add("IPv6",$ip6.IPAddressToString)
-    }
-    New-Object -TypeName psobject -Property $out
-}
 
 function Get-JekyllTitle {
     [CmdletBinding()]
@@ -183,8 +164,45 @@ function Test-PSVersionGitHub {
         "GitHubReleaseVersion" = $GitId;
         "GitHubReleaseLink" = $Download;
     }
-    Write-Output (New-Object -TypeName psobject -Property $output)
+    if($output.PSVersion -ne $output.GitCommitId){
+        Write-Output (New-Object -TypeName psobject -Property $output)
+    }
 }
 if($iscoreclr){
     Test-PSVersionGitHub
+}
+
+
+
+dir  "$env:USERPROFILE\Git\IT Pro Trashcan\tto\tools" -Filter *.ps1 | %{ . $_.FullName }
+
+
+
+
+function Send-SendGridMail {
+    [cmdletbinding()]
+	param(
+        [string]$Sender = "notification@onprem.wtf",
+        [string]$Recipient,
+        [string]$Subject,
+        [string]$Text,
+        [string]$ApiKey
+    )
+    $body = [ordered]@{
+        personalizations= @(@{
+            to = @(@{email =  $recipient})
+        subject = $SubJect })
+        from = @{
+            email =  $Sender
+            name = "notification"
+        }
+        content = @( @{ 
+            type = "text/plain"
+            value = $Text 
+        }
+    )} | ConvertTo-Json -Depth 4 -Compress
+	$Result = Invoke-RestMethod -Uri "https://api.sendgrid.com/v3/mail/send" -ContentType "application/json" -body $body -Method POST -Headers @{Authorization=("Bearer $ApiKey")} -UseBasicParsing
+    if($Result) {
+        $Result.Messages
+    }
 }

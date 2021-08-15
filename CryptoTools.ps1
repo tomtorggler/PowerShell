@@ -208,3 +208,36 @@ function Get-ChainfeedTx {
     }
 }
 
+
+
+function get-unixtime {
+    param([datetime]$date)
+    if(-not $date) {
+        $date = ([datetime]::UtcNow).AddHours(-1)
+    }
+    $ts = New-TimeSpan -Start (Get-Date 01.01.1970) -End $date
+    [int]$ts.TotalSeconds
+}
+function invoke-whalealertapi {
+    param(
+        $endpoint = "status",
+        $apikey = $whalealertapi,
+        $baseUrl = "https://api.whale-alert.io/v1",
+        $currency,
+        $minvalue,
+        $start = (get-unixtime)
+    )
+    $header = @{
+        "X-WA-API-KEY" = $apikey
+    }
+    $uri = $baseUrl,$endpoint -join "/"
+    $uri += "?start=$start"
+    if($currency){
+        $uri += "&currency=$currency"
+    }
+    if($minvalue){
+        $uri += "&min_value=$minvalue"
+    }
+    $r = Invoke-RestMethod -Uri $uri -Headers $header
+    $r.transactions
+}

@@ -241,3 +241,39 @@ function invoke-whalealertapi {
     $r = Invoke-RestMethod -Uri $uri -Headers $header
     $r.transactions
 }
+function convertto-ether {
+    param($i)
+    $i/1000000000000000000
+}
+
+function invoke-etherscanio {
+    param(
+        [Parameter()]
+        [ValidateSet("mainnet","goerli","rinkeby")]
+        $network = "mainnet",
+        [Parameter()]
+        [ValidateSet("account","transaction")]
+        $module = "account",
+        $apikey = $etherscanapi
+    )
+    if($network -eq "mainnet"){$url = ""} else {$url = "-$network"}
+    $baseUrl = "https://api{0}.etherscan.io/api?module={1}" -f $url,$module
+
+    if($address){
+        $baseUrl += "&action=balance&address=$address"
+    }
+
+    $baseUrl += "&apikey=$apikey"
+
+    $r = Invoke-RestMethod -Uri $baseUrl 
+    $r
+}
+
+function Get-EtherScanBalance {
+    param(
+        $Address,
+        $apikey = "N9XZ94DDT1NBD18PJ8DZKXU76ZUNDVRQ83"
+    )
+    $out=invoke-etherscanio -address $Address
+    convertto-ether -i $out.result
+}

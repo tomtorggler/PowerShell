@@ -2,23 +2,30 @@ Add-Type -Path "C:\Program Files\Microsoft\Exchange\Web Services\2.2\Microsoft.E
 
 $EmailAccount = "tom@uclab.eu" 
 $Password = "*"
+
+
+
+
+
 $EWS = New-Object Microsoft.Exchange.WebServices.Data.ExchangeService([Microsoft.Exchange.WebServices.Data.ExchangeVersion]::Exchange2013_SP1) 
 $EWS.Credentials = New-Object Net.NetworkCredential($EmailAccount, $Password)
 $EWS.AutodiscoverUrl($EmailAccount,{$true}) 
 
-$inbox = [Microsoft.Exchange.WebServices.Data.Folder]::Bind($ews,[Microsoft.Exchange.WebServices.Data.WellKnownFolderName]::Inbox) 
-$Contacts = [Microsoft.Exchange.WebServices.Data.Folder]::Bind($ews,[Microsoft.Exchange.WebServices.Data.WellKnownFolderName]::Contacts) 
+$userid = [Microsoft.Exchange.WebServices.Data.ImpersonatedUserId]::new()
+$userid.id = "__"
+$userid.id = "__"
+$ews.ImpersonatedUserId = $userid
 
-$ContactItems = $Contacts.FindItems(50)
-$ContactItems | %{$_.Load()}
+$Calendar = [Microsoft.Exchange.WebServices.Data.Folder]::Bind($ews,[Microsoft.Exchange.WebServices.Data.WellKnownFolderName]::Calendar) 
 
-foreach($c in $ContactItems){
-    New-Object -TypeName psobject -Property ([ordered]@{
-        DisplayName = $c.DisplayName
-        BusinessPhone = $c.PhoneNumbers[[Microsoft.Exchange.WebServices.Data.PhoneNumberKey]::BusinessPhone]
-        MobilePhone = $c.PhoneNumbers[[Microsoft.Exchange.WebServices.Data.PhoneNumberKey]::MobilePhone]
-        HomePhone = $c.PhoneNumbers[[Microsoft.Exchange.WebServices.Data.PhoneNumberKey]::HomePhone]    
-    })
-}
-
-				
+$appointment = New-Object Microsoft.Exchange.WebServices.Data.Appointment -ArgumentList $EWS
+$appointment.Subject = "EWS Test"
+$appointment.Body = "EWS Test"
+$appointment.Start = Get-Date (Get-DAte).AddHours(1)
+$appointment.End = Get-Date (Get-DAte).AddHours(2)
+$appointment.IsReminderSet = $true
+$appointment.LegacyFreeBusyStatus = [Microsoft.Exchange.WebServices.Data.LegacyFreeBusyStatus]::Free
+$appointment.Location = "Location"
+$appointment.Save([Microsoft.Exchange.WebServices.Data.SendInvitationsMode]::SendToNone)
+$appointment.id.ChangeKey
+$Calendar.FindItems(2).id.changekey

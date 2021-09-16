@@ -1,17 +1,14 @@
 #######
-### The actual $PROFILE only contains the following line
+### The actual $PROFILE only contains the following line to dot-source this file
 ### . $env:USERPROFILE\Git\PowerShell\Microsoft.PowerShell_profile.ps1
-### to dot-source this file
 ######
 $host.PrivateData.ErrorForegroundColor = 'white'
 ## Aliases... because of muscle memory :/
 New-Alias -Name ll -Value Get-ChildItem -ErrorAction SilentlyContinue
 
-#Import-Module C:\Users\thomas.torggler\AppData\Local\Apps\2.0\9V9HVHDB.2KG\691XWNER.8NB\micr..tion_d8f8f667ee342b5c_0010.0000_6b4a13fd451b1c00\Microsoft.Exchange.Management.ExoPowershellModule.dll -ErrorAction SilentlyContinue
-
 function Invoke-AsAdmin {
     param($command)
-    Start-Process powershell -Verb RunAs -ArgumentList "-noprofile $command"
+    Start-Process pwsh -Verb RunAs -ArgumentList "-noprofile $command"
 }
 
 function Set-DnsOpen { 
@@ -44,20 +41,8 @@ if (Test-Path($ChocolateyProfile)) {
   Import-Module "$ChocolateyProfile"
 }
 
-function Set-SecurityProtocol {
-    param(
-        [System.Security.Authentication.SslProtocols]$Protocol,
-        [switch]$Default
-    )
-    if($default) {
-        [net.servicepointmanager]::SecurityProtocol = [System.Security.Authentication.SslProtocols]::Default
-    } else {
-        [net.servicepointmanager]::SecurityProtocol = $Protocol
-    }
-}
-function Get-SecurityProtocol {
-    [net.servicepointmanager]::SecurityProtocol
-}
+dir  "$env:USERPROFILE\Git\it-pro-trashcan\tto\tools" -Filter *.ps1 | %{ . $_.FullName }
+Set-SecurityProtocol -Protocol Tls12
 
 $connectedIf = Get-NetIPInterface -ConnectionState Connected | Where-Object ifAlias -NotMatch "loopback|veth|bluetooth"
 if($connectedIf){
@@ -74,38 +59,6 @@ Security Protcols: $(Get-SecurityProtocol)
 "
 Write-Host $write -ForegroundColor Yellow
 
-
-function Send-MailJetMail {
-    [cmdletbinding()]
-	param(
-        [string]$Sender = "notification@tomt.it",
-        [string]$Recipient,
-        [string]$Subject,
-        [string]$Text,
-        [string]$ApiKey,
-        [string]$Secret
-    )
-    $body = @{
-        Messages = @(@{
-            From = @{
-                Email = $sender
-                Name = "Notification"
-            }
-            To = @(@{
-                Email = $recipient
-                Name = ""
-            })
-            Subject = $subject
-            TextPart = $text
-        })
-    
-    } | ConvertTo-Json -Depth 4
-    $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(("{0}:{1}" -f $ApiKey,$Secret)))
-	$Result = Invoke-RestMethod -Uri "https://api.mailjet.com/v3.1/send" -ContentType "application/json" -body $body -Method POST -Headers @{Authorization=("Basic {0}" -f $base64AuthInfo)} -UseBasicParsing
-    if($Result) {
-        $Result.Messages
-    }
-}
 
 
 function prompt {
@@ -172,37 +125,3 @@ if($iscoreclr){
     Test-PSVersionGitHub
 }
 
-
-
-dir  "$env:USERPROFILE\Git\IT Pro Trashcan\tto\tools" -Filter *.ps1 | %{ . $_.FullName }
-
-
-
-
-function Send-SendGridMail {
-    [cmdletbinding()]
-	param(
-        [string]$Sender = "notification@onprem.wtf",
-        [string]$Recipient,
-        [string]$Subject,
-        [string]$Text,
-        [string]$ApiKey
-    )
-    $body = [ordered]@{
-        personalizations= @(@{
-            to = @(@{email =  $recipient})
-        subject = $SubJect })
-        from = @{
-            email =  $Sender
-            name = "notification"
-        }
-        content = @( @{ 
-            type = "text/plain"
-            value = $Text 
-        }
-    )} | ConvertTo-Json -Depth 4 -Compress
-	$Result = Invoke-RestMethod -Uri "https://api.sendgrid.com/v3/mail/send" -ContentType "application/json" -body $body -Method POST -Headers @{Authorization=("Bearer $ApiKey")} -UseBasicParsing
-    if($Result) {
-        $Result.Messages
-    }
-}

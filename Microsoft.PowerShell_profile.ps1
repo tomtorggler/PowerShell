@@ -41,11 +41,7 @@ if (Test-Path($ChocolateyProfile)) {
   Import-Module "$ChocolateyProfile"
 }
 
-<<<<<<< HEAD
-dir  "$env:USERPROFILE\Git\it-pro-trashcan\tto\tools" -Filter *.ps1 | %{ . $_.FullName }
-=======
 dir  "$env:USERPROFILE\Git\IT-Pro-Trashcan\tto\tools" -Filter *.ps1 | %{ . $_.FullName }
->>>>>>> 4bdf3504cbf9eb2829425581d2c9de7b7de890af
 Set-SecurityProtocol -Protocol Tls12
 
 $connectedIf = Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Sort-Object -Property RouteMetric -Descending 
@@ -129,7 +125,4 @@ if($iscoreclr){
     Test-PSVersionGitHub
 }
 
-<<<<<<< HEAD
-=======
 $env:Path += ";C:\Users\ThomasTorggler\OneDrive - Experts Inside AG\Tools"
->>>>>>> 4bdf3504cbf9eb2829425581d2c9de7b7de890af

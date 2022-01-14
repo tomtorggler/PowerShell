@@ -41,8 +41,9 @@ if (Test-Path($ChocolateyProfile)) {
   Import-Module "$ChocolateyProfile"
 }
 
-dir  "$env:USERPROFILE\Git\IT-Pro-Trashcan\tto\tools" -Filter *.ps1 | %{ . $_.FullName }
+dir  "$home\Git\IT-Pro-Trashcan\tto\tools" -Filter *.ps1 | %{ . $_.FullName }
 Set-SecurityProtocol -Protocol Tls12
+if($PSVersionTable.platform -like "Win*"){
 
 $connectedIf = Get-NetRoute -DestinationPrefix 0.0.0.0/0 | Sort-Object -Property RouteMetric -Descending 
 if($connectedIf){
@@ -59,6 +60,7 @@ Security Protcols: $(Get-SecurityProtocol)
 "
 Write-Host $write -ForegroundColor Yellow
 
+}
 
 
 function prompt {
@@ -77,7 +79,7 @@ function prompt {
     }
     $host.UI.RawUI.WindowTitle = $WindowTitle
     $host.UI.Write("Yellow", $host.UI.RawUI.BackGroundColor, "[$info]")
-    " $($cwd.Replace($env:USERPROFILE,"~"))$('>' * ($nestedPromptLevel + 1)) ";
+    " $($cwd.Replace($home,"~"))$('>' * ($nestedPromptLevel + 1)) ";
 }
 
 function Set-WindowTitle($String) {
@@ -121,8 +123,40 @@ function Test-PSVersionGitHub {
         Write-Output (New-Object -TypeName psobject -Property $output)
     }
 }
-if($iscoreclr){
-    Test-PSVersionGitHub
-}
 
 $env:Path += ";C:\Users\ThomasTorggler\OneDrive - Experts Inside AG\Tools"
+
+
+function Test-macOSNetConnection {
+    [CmdletBinding()]
+    param (
+        [System.Net.IPAddress]$IP4Address = '1.1.1.1',
+        [System.Net.IPAddress]$IP6Address = '2606:4700:4700::1111',
+        [string]$TestFqdn = "onprem.wtf",
+        [string]$WebTest = "https://outlook.office365.com/owa/favicon.ico",
+        [int]$Count = 1
+    )
+    $r = Invoke-Expression -command "ping $IP4Address -c $count"
+    $r6 = Invoke-Expression -command "ping6 $IP6Address -c $count"
+    $dg = netstat -nr | Select-String -Pattern default
+
+    $dns = Invoke-Expression -Command "dig $TestFqdn +short"
+    $dns6 = Invoke-Expression -Command "dig $TestFqdn AAAA +short"
+
+    $web = Invoke-WebRequest -Uri $WebTest -Method head
+
+    [PSCustomObject]@{
+        ping = $r[-1..-2] -join ', '
+        ping6 = $r6[-1..-2] -join ', '
+        dns = $dns -join ', '
+        dns6 = $dns6 -join ', '
+        web = $web.StatusDescription
+    }
+}
+
+
+if($iscoreclr){
+    Test-PSVersionGitHub
+    New-Alias -Name tnc -Value Test-macOSNetConnection
+    
+}

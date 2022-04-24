@@ -147,7 +147,7 @@ function Test-macOSNetConnection {
 
     [PSCustomObject]@{
         ping = $r[-1..-2] -join ', '
-        ping6 = $r6[-1..-2] -join ', '
+        #ping6 = $r6[-1..-2] -join ', '
         dns = $dns -join ', '
         dns6 = $dns6 -join ', '
         web = $web.StatusDescription

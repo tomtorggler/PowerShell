@@ -155,10 +155,9 @@ function Test-macOSNetConnection {
 }
 
 
-if($iscoreclr){
+if($IsMacOS){
     Test-PSVersionGitHub
     New-Alias -Name tnc -Value Test-macOSNetConnection
-    
 }
 
 

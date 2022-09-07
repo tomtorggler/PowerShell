@@ -16,7 +16,7 @@ function Get-Cdr {
         } 
         if(Test-Path $Path) {
             Write-Verbose "Get CDR from: $Path"
-            (Select-String -Pattern $Pattern -Path $Path | Select-Object -ExpandProperty line).TrimEnd() -replace "\|","," -replace "\s*,",","
+            (Select-String -Pattern $Pattern -Path $Path | Select-Object -ExpandProperty line).TrimEnd() -replace "\|","," -replace "\s*,","," -replace "BYE(.*)","BYE" -replace "CANCEL(.*)","CANCEL" -replace "q.850(.*)","Q.850"
         }   
     }
 }
@@ -99,24 +99,29 @@ function Get-CdrTitle {
         [System.IO.FileInfo]
         $Path,
         [Parameter(Mandatory)]
-        [ValidateSet("MEDIA","SBC")]
+        [ValidateSet("MEDIA","SBC","GW")]
         [string]$Type
     )
-    $Pattern = "SBCReportType"
-    if($type -eq "MEDIA") { 
-        $Pattern = "MediaReportType" 
-    } 
+    switch ($type) {
+        'media' { $Pattern = "MediaReportType" }
+        'gw' { $Pattern = "GWReportType" }
+        'sbc' { $Pattern = "SBCReportType" }
+    }
+    
     if(Test-Path $Path) {
-        $title = Select-String -Path $path -Pattern $Pattern | Select-Object -ExpandProperty line | Select-Object -First 1
-        $out = $title -replace "^.*?\|","Timestamp|" -replace " ","" -split "\|" -replace "\(\w+\)","" -replace "SBCReportType","ReportType" -replace "MediaReportType","ReportType"        
+        #$title = Select-String -Path $path -Pattern $Pattern | Select-Object -ExpandProperty line | Select-Object -First 1
+        #$out = $title -replace "^.*?\|","Timestamp|" -replace " ","" -split "\|" -replace "\(\w+\)","" -replace $Pattern,"ReportType"
     }
     if($Type -eq "MEDIA" -and -not($out)){
         $out = @('Timestamp','ReportType','SIPCallId','SessionId','Cid','MediaType','Coder','Intrv','LocalRtpIp','LocalRtpPort','RemoteRtpIp','RemoteRtpPort','InPackets','OutPackets','LocalPackLoss','RemotePackLoss','RTPdelay','RTPjitter','TxRTPssrc','RxRTPssrc','LocalRFactor','RemoteRFactor','LocalMosCQ','RemoteMosCQ','TxRTPIPDiffServ','LatchedRtpIp','LatchedRtpPort','LatchedT38Ip','LatchedT38Port','CoderTranscoding','LegId')
     } elseif($Type -eq "SBC" -and -not($out)) {
         $out = @('Timestamp','ReportType','EPTyp','SIPCallId','SessionId','Orig','SourceIp','SourcePort','DestIp','DestPort','TransportType','SrcURI','SrcURIBeforeMap','DstURI','DstURIBeforeMap','Durat','TrmSd','TrmReason','TrmReasonCategory','SetupTime','ConnectTime','ReleaseTime','RedirectReason','RedirectURINum','RedirectURINumBeforeMap','TxSigIPDiffServ','IPGroup','SrdId','SIPInterfaceId','ProxySetId','IpProfileId','MediaRealmId','DirectMedia','SIPTrmReason','SipTermDesc')
-    } 
+    } elseif ($Type -eq "GW" -and -not($out)) {
+        $out = @('Timestamp','ReportType','Cid','SessionId','LegId','Trunk','BChan','ConId','TG','EPTyp','Orig','SourceIp','DestIp','SrcTON','SrcNPI','SrcPhoneNum','SrcNumBeforeMap','DstTON','DstNPI','DstPhoneNum','DstNumBeforeMap','Duration','Coder','Intrv','RtpIp','Port','TrmSd','TrmReason','Fax','InPackets','OutPackets','PackLoss','RemotePackLoss','SIPCallId','SetupTime','ConnectTime','ReleaseTime','RTPdelay','RTPjitter','RTPssrc','RemoteRTPssrc','RedirectReason','TON','NPI','RedirectPhonNum','MeteringPulses','SrcHost','SrcHostBeforeMap','DstHost','DstHostBeforeMap','IPG (name)','LocalRtpIp','LocalRtpPort','Amount','Mult','TrmReasonCategory','RedirectNumBeforeMap','SrdId (name)','SIPInterfaceId (name)','ProxySetId (name)','IpProfileId (name)','MediaRealmId (name)','SigTransportType','TxRTPIPDiffServ','TxSigIPDiffServ','LocalRFactor','RemoteRFactor','LocalMosCQ','RemoteMosCQ','SigSourcePort','SigDestPort','MediaType','AMD','Percent','SIPTrmReason','SIPTer')
+    }
     Write-Output $out
 }
+
 
 <#
 function Get-BadStream {
@@ -188,7 +193,7 @@ function Get-HostFromPath {
     }
 }
 
-function Get-MediaCdr{
+function Get-MediaCdr {
     [cmdletbinding()]
     param($path)
     $header = Get-CdrTitle -Path $path -Type MEDIA
@@ -197,11 +202,20 @@ function Get-MediaCdr{
     Import-Cdr -Header $header -Path $tempfile
 }
 
-function Get-SbcCdr{
+function Get-SbcCdr {
     [cmdletbinding()]
     param($path)
     $header = Get-CdrTitle -Path $path -Type SBC
     $tempfile = Join-path -Path $env:temp -ChildPath "$((get-date).ticks).txt"
     Get-Cdr $path -Type SBC | Set-Content $tempfile
+    Import-Cdr -Header $header -Path $tempfile
+}
+
+function Get-GWCdr {
+    [cmdletbinding()]
+    param($path)
+    $header = Get-CdrTitle -Path $path -Type gw
+    $tempfile = Join-path -Path $env:temp -ChildPath "$((get-date).ticks).txt"
+    Get-Cdr $path -Type sbc | Set-Content $tempfile
     Import-Cdr -Header $header -Path $tempfile
 }

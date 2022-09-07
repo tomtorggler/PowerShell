@@ -160,3 +160,11 @@ if($iscoreclr){
     New-Alias -Name tnc -Value Test-macOSNetConnection
     
 }
+
+
+### version
+
+$PSReadLineVersion = (Get-Module -Name PSReadLine).Version.ToString()
+if($PSReadLineVersion -ge "2.2.6"){
+    Set-PSReadLineOption -PredictionSource HistoryAndPlugin -PredictionViewStyle ListView
+}

@@ -124,7 +124,7 @@ function Test-PSVersionGitHub {
     }
 }
 
-$env:Path += ";C:\Users\ThomasTorggler\OneDrive - Experts Inside AG\Tools"
+$env:Path += ";C:\Users\ThomasTorggler\OneDrive - Experts Inside AG\Tools;C:\Program Files\1Password CLI"
 
 
 function Test-macOSNetConnection {

@@ -6,7 +6,9 @@ function New-NostrFilterString {
         [string[]]$authors,
         [int[]]$kinds,
         [string]$etag,
-        [string]$ptag
+        [string]$ptag,
+        [int]$limit,
+        $relay
     )
     $nosQ = @(
         "REQ",
@@ -18,6 +20,7 @@ function New-NostrFilterString {
         'kinds' {$nosQ += @{kinds=$kinds}}
         'etag' {$nosQ += @{'#e'=$etag}}
         'ptag' {$nosQ += @{'#p'=$ptag}}
+        'limit' {$nosQ += @{'limit'=$limit}}
     }
     ConvertTo-Json -InputObject $nosQ -Compress
 }
@@ -62,26 +65,53 @@ function Send-NostrRequest {
     return $conn
 }
 
-$ws = New-NostrRelayConnection -URL wss://relay.damus.io
-
-$filter = New-NostrFilterString -kinds 1
-
-$send = Send-NostrRequest -QueryString $filter -WebSocket $ws -verbose
-
-While ($WS.State -eq 'Open') {
-    $Array = [byte[]] @(,0) * 1024    
-    $Recv = New-Object System.ArraySegment[byte] -ArgumentList @(,$Array)
-    $CT = New-Object System.Threading.CancellationToken
-    $Conn = $WS.ReceiveAsync($Recv, $CT)
-    While (!$Conn.IsCompleted) { 
-        Start-Sleep -Milliseconds 200 
+function Get-NostrEvent {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [ValidateSet('wss://nostr.v0l.io','wss://relay.snort.social','wss://relay.damus.io','wss://relay.nostr.info')]
+        [string[]]$Relay = 'wss://nostr.v0l.io',
+        $Ids,
+        $Kinds = 1,
+        $Authors,
+        $Limit
+    )
+    begin {
+        $filter = New-NostrFilterString @PSBoundParameters
     }
-    $out = [System.Text.Encoding]::utf8.GetString($Recv.array)
-    
-    try {
-        $out | ConvertFrom-Json -ErrorAction stop -OutVariable global:outobj -AsHashtable
-        $global:outarray += $global:outobj
-    } catch {
-        #"could not convert $out"
+    process {
+        foreach($rUri in $Relay){
+            $ws = New-NostrRelayConnection -URL $rUri
+            $send = Send-NostrRequest -QueryString $filter -WebSocket $ws 
+            While ($WS.State -eq 'Open') {
+                $Array = [byte[]] @(,0) * 1024    
+                $Recv = New-Object System.ArraySegment[byte] -ArgumentList @(,$Array)
+                $CT = New-Object System.Threading.CancellationToken
+                $Conn = $WS.ReceiveAsync($Recv, $CT)
+                While (!$Conn.IsCompleted) { 
+                    Start-Sleep -Milliseconds 100 
+                }
+                $out = [System.Text.Encoding]::utf8.GetString($Recv.array)
+                if($out -match '^\["EOSE"' ){
+                    $send = Send-NostrRequest -QueryString '["CLOSE", "nostrps"]' -WebSocket $ws
+                    $ws.dispose()
+                    $send.dispose()
+                    $conn.dispose()
+                    continue
+                }
+                try {
+                    $outobj = $out | ConvertFrom-Json -ErrorAction stop -AsHashtable | Where-Object {$_ -is [hashtable]}
+                    $outobj.created_at = Get-Date -UnixTimeSeconds $outobj.created_at
+                    $outobj.add('Relay',$rUri)
+                    new-object -TypeName psobject -Property $outobj
+                } catch {
+                    # could not convert from json
+                }
+            }
+        }
     }
 }
+
+
+
+Get-NostrEvent -Kinds 3 -Relay wss://nostr.v0l.io,wss://relay.nostr.info -Verbose 

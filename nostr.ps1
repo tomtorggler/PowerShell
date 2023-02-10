@@ -1,4 +1,14 @@
 
+function ConvertTo-UnixTime {
+    param(
+        [Parameter(ValueFromPipeline)]
+        [datetime]$Date = [datetime]::Now
+    )
+    process{
+        [int]((New-TimeSpan -Start (Get-Date -Date '1970-01-01') -End (($Date).ToUniversalTime())).TotalSeconds)
+    }
+}
+
 function New-NostrFilterString {
     [CmdletBinding()]
     param(
@@ -8,20 +18,27 @@ function New-NostrFilterString {
         [string]$etag,
         [string]$ptag,
         [int]$limit,
+        [datetime]$since,
+        [datetime]$until,
         $relay
     )
+    $filters = [ordered]@{}
+    switch($PSBoundParameters.Keys){
+        'ids' {$filters.add('ids',$ids)}
+        'authors' {$filters.add('authors',$authors)}
+        'kinds' {$filters.add('kinds',$kinds)}
+        'etag' {$filters.add('#e',$etag)}
+        'ptag' {$filters.add('#p',$ptag)}
+        'limit' {$filters.add('limit',$limit)}
+        'since' {$filters.add('since',($since | ConvertTo-UnixTime))}
+        'until' {$filters.add('until',($until | ConvertTo-UnixTime))}
+    }
     $nosQ = @(
         "REQ",
-        "nostrps"
+        "nostrps",
+        $filters
     )
-    switch($PSBoundParameters.Keys){
-        'ids' {$nosQ += @{ids=$ids}}
-        'authors' {$nosQ += @{authors=$authors}}
-        'kinds' {$nosQ += @{kinds=$kinds}}
-        'etag' {$nosQ += @{'#e'=$etag}}
-        'ptag' {$nosQ += @{'#p'=$ptag}}
-        'limit' {$nosQ += @{'limit'=$limit}}
-    }
+
     ConvertTo-Json -InputObject $nosQ -Compress
 }
 
@@ -69,12 +86,14 @@ function Get-NostrEvent {
     [CmdletBinding()]
     param (
         [Parameter()]
-        [ValidateSet('wss://nostr.v0l.io','wss://relay.snort.social','wss://relay.damus.io','wss://relay.nostr.info')]
-        [string[]]$Relay = 'wss://nostr.v0l.io',
+        #[ValidateSet('wss://eden.nostr.land','wss://relay.snort.social','wss://relay.damus.io','wss://relay.nostr.info')]
+        [string[]]$Relay = 'wss://eden.nostr.land',
         $Ids,
-        $Kinds = 1,
+        $Kinds,
         $Authors,
-        $Limit
+        $Limit,
+        $Since,
+        $Until
     )
     begin {
         $filter = New-NostrFilterString @PSBoundParameters
@@ -93,6 +112,7 @@ function Get-NostrEvent {
                 }
                 $out = [System.Text.Encoding]::utf8.GetString($Recv.array)
                 if($out -match '^\["EOSE"' ){
+                    Write-Verbose "Received EOSE, closing connection."
                     $send = Send-NostrRequest -QueryString '["CLOSE", "nostrps"]' -WebSocket $ws
                     $ws.dispose()
                     $send.dispose()
@@ -105,7 +125,7 @@ function Get-NostrEvent {
                     $outobj.add('Relay',$rUri)
                     new-object -TypeName psobject -Property $outobj
                 } catch {
-                    # could not convert from json
+                    # "could not convert from json"
                 }
             }
         }
@@ -113,5 +133,46 @@ function Get-NostrEvent {
 }
 
 
+$relays = @(
+    'wss://nostr.milou.lol',
+    'wss://bitcoiner.social',
+    'wss://relay.nostr.com.au',
+    'wss://relay.nostrati.com',
+    'wss://nostr.inosta.cc',
+    'wss://nostr.plebchain.org',
+    'wss://atlas.nostr.land',
+    'wss://relay.nostrich.land',
+    'wss://relay.nostriches.org',
+    'wss://private.red.gb.net',
+    'wss://nostr.decentony.com',
+    'wss://relay.orangepill.dev',
+    'wss://puravida.nostr.land',
+    'wss://nostr.wine',
+    'wss://eden.nostr.land',
+    'wss://nostr.gives.africa',
+    'wss://relay.snort.social',
+    'wss://relay.damus.io'
+) 
 
-Get-NostrEvent -Kinds 3 -Relay wss://nostr.v0l.io,wss://relay.nostr.info -Verbose 
+function Get-NostrRelayInfo {
+    [CmdletBinding()]
+    param(
+        [Parameter(ValueFromPipeline)]
+        $uri
+    )
+    process {
+        write-verbose "testing $uri"
+        $uri = $uri -replace '^ws','http'
+        $out = [ordered]@{
+            relay = $uri
+        }  
+        $out.time = (Measure-Command {$r=Invoke-RestMethod -TimeoutSec 2 $uri -Headers @{accept='application/nostr+json'} -ErrorAction SilentlyContinue }).TotalMilliseconds
+        $out.nips = $r.supported_nips -join ', '
+        $out.software = $r.software
+        $out.version = $r.version
+        $out.pubkey = $r.pubkey
+        [pscustomobject]$out
+    }
+}
+
+#$relays | Get-NostrRelayInfo

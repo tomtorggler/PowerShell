@@ -133,6 +133,28 @@ function Get-NostrEvent {
 }
 
 
+function Test-NostrWebSocket {
+    param(
+        [Parameter(ValueFromPipeline)]
+        $Relay
+    )
+    process{
+        $WS = New-Object System.Net.WebSockets.ClientWebSocket
+        $CT = New-Object System.Threading.CancellationToken
+        $WS.Options.UseDefaultCredentials = $true
+        Write-Host "Testing $Relay " -NoNewline
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        $Conn = $WS.ConnectAsync($Relay, $CT)
+        While (!$Conn.IsCompleted) {
+            Write-Host "." -NoNewline 
+            Start-Sleep -Milliseconds 10
+        }
+        $sw.Stop(); $Conn.Dispose(); $ws.Dispose()
+        Write-Host " connected after $($sw.ElapsedMilliseconds) ms"
+        return $sw.ElapsedMilliseconds
+    }
+}
+
 $relays = @(
     'wss://nostr.milou.lol',
     'wss://bitcoiner.social',
@@ -158,15 +180,16 @@ function Get-NostrRelayInfo {
     [CmdletBinding()]
     param(
         [Parameter(ValueFromPipeline)]
-        $uri
+        $Uri
     )
     process {
         write-verbose "testing $uri"
-        $uri = $uri -replace '^ws','http'
+        $httpsUri = $uri -replace '^ws','http'
         $out = [ordered]@{
             relay = $uri
         }  
-        $out.time = (Measure-Command {$r=Invoke-RestMethod -TimeoutSec 2 $uri -Headers @{accept='application/nostr+json'} -ErrorAction SilentlyContinue }).TotalMilliseconds
+        $out.timeHttps = (Measure-Command {$r=Invoke-RestMethod -TimeoutSec 2 $httpsUri -Headers @{accept='application/nostr+json'} -ErrorAction SilentlyContinue }).TotalMilliseconds
+        $out.timeWss = Test-NostrWebSocket -Relay $uri
         $out.nips = $r.supported_nips -join ', '
         $out.software = $r.software
         $out.version = $r.version

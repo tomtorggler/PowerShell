@@ -1,9 +1,10 @@
 # Create a symbolic link for the file 
 # mac
-# ln -s /Users/ttor/git/PowerShell/Microsoft.PowerShell_profile_osx.ps1 /Users/ttor/.config/powershell/Microsoft.PowerShell_profile.ps1
+# mkdir /Users/tto/.config/powershell
+# ln -s /Users/tto/git/PowerShell/Microsoft.PowerShell_profile_osx.ps1 /Users/tto/.config/powershell/Microsoft.PowerShell_profile.ps1
 # bash on win 10
-# mkdir /home/tomt/.config/powershell
-# Copy-Item /mnt/c/Users/Thomas/OneDrive/_psscripts/git/PowerShell/Microsoft.PowerShell_profile_osx.ps1 $Profile -Force
+# mkdir /home/tto/.config/powershell
+# Copy-Item /mnt/c/Users/tto/OneDrive/_psscripts/git/PowerShell/Microsoft.PowerShell_profile_osx.ps1 $Profile -Force
 
 # Update PATH variable for Mac so that I can run most bash commands in PS 
 $env:PATH += ":/usr/local/bin"
@@ -35,4 +36,5 @@ function Test-PSVersionGitHub {
     }
     Write-Output (New-Object -TypeName psobject -Property $output)
 }
-Test-PSVersionGitHub
+# powershell started checking for newer versions by itself
+# Test-PSVersionGitHub

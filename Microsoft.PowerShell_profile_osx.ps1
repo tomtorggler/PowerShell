@@ -7,7 +7,9 @@
 # Copy-Item /mnt/c/Users/tto/OneDrive/_psscripts/git/PowerShell/Microsoft.PowerShell_profile_osx.ps1 $Profile -Force
 
 # Update PATH variable for Mac so that I can run most bash commands in PS 
-$env:PATH += ":/usr/local/bin"
+$addToPath = @(":/usr/local/bin","/opt/homebrew/opt/ruby/bin","/opt/homebrew/bin","/opt/homebrew/sbin")
+
+$env:PATH += $addToPath -join ":"
 
 # import modules for powercli
 function Import-PowerCliModules {

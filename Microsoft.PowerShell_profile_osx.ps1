@@ -11,7 +11,8 @@ $addToPath = @(
     ":/usr/local/bin",
     "/opt/homebrew/opt/ruby/bin",
     "/opt/homebrew/bin",
-    "/opt/homebrew/sbin"
+    "/opt/homebrew/sbin",
+    "/Users/tto/Library/Python/3.9/bin"
 )
 
 $env:PATH += $addToPath -join ":"

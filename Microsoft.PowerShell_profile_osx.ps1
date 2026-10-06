@@ -48,4 +48,4 @@ function Test-PSVersionGitHub {
 # powershell started checking for newer versions by itself
 # Test-PSVersionGitHub
 
-. ~/git/PowerShell/Microsoft.PowerShell_profile.ps1
+. "$PSScriptRoot/Microsoft.PowerShell_profile.ps1"

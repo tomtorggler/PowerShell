@@ -41,7 +41,7 @@ if (Test-Path($ChocolateyProfile)) {
   Import-Module "$ChocolateyProfile"
 }
 
-dir  "$home\Git\IT-Pro-Trashcan\tto\tools" -Filter *.ps1 | %{ . $_.FullName }
+dir  "$home/git/expertsinside-trashcan/tto/tools" -Filter *.ps1 | %{ . $_.FullName }
 Set-SecurityProtocol -Protocol Tls12
 if($PSVersionTable.platform -like "Win*"){
 
